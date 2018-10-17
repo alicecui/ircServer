@@ -34,47 +34,48 @@ func main() {
 
 func handle(conn net.Conn) {
 	for {
-		data := make([]byte, 255)  //创建字节流 （此处同 一对一 通信）
-		msg_read, err := conn.Read(data)  //声明并将从客户端读取的消息赋给msg_read 和err
+		data := make([]byte, 255)        //创建字节流 （此处同 一对一 通信）
+		msg_read, err := conn.Read(data) //声明并将从客户端读取的消息赋给msg_read 和err
 		if msg_read == 0 || err != nil {
 			continue
 		}
 
 		//解析协议
-		msg_str := strings.Split(string(data[0:msg_read]), "|")  //将从客户端收到的字节流分段保存到msg_str这个数组中
+		msg_str := strings.Split(string(data[0:msg_read]), "|") //将从客户端收到的字节流分段保存到msg_str这个数组中
 
 		switch msg_str[0] {
-		case "nick":  //加入聊天室
-			fmt.Println(conn.RemoteAddr(), "-->", msg_str[1])  //nick占在数组下标0上，客户端上写的昵称占在数组下标1上
-			for k, v := range ConnMap {  //遍历集合中存储的客户端消息
+		case "nick":                                          //加入聊天室
+			fmt.Println(conn.RemoteAddr(), "-->", msg_str[1]) //nick占在数组下标0上，客户端上写的昵称占在数组下标1上
+			for k, v := range ConnMap { //遍历集合中存储的客户端消息
 				if k != msg_str[1] {
-					n,err:=v.Write([]byte("[" + msg_str[1] + "]: join..."))
-					if err!=nil {
-						fmt.Println("Write err code:",n)
+					n, err := v.Write([]byte("[" + msg_str[1] + "]: join..."))
+					if err != nil {
+						fmt.Println("Write err code:", err, n)
 					}
 				}
 			}
 			ConnMap[msg_str[1]] = conn
-		case "say":   //转发消息
-			for k, v := range ConnMap {  //k指客户端昵称   v指客户端连接服务器端后的地址
-				if k != msg_str[1] {  //判断是不是给自己发，如果不是
-					fmt.Println("Send "+msg_str[2]+" to ", k)  //服务器端将消息转发给集合中的每一个客户端
-					n,err:=v.Write([]byte("[" + msg_str[1] + "]: " + msg_str[2]))  //给除了自己的每一个客户端发送自己之前要发送的消息
-					if err!=nil {
-						fmt.Println("Write err code:",n)
+		case "say": //转发消息
+			for k, v := range ConnMap { //k指客户端昵称   v指客户端连接服务器端后的地址
+				if k != msg_str[1] { //判断是不是给自己发，如果不是
+					fmt.Println("Send "+msg_str[2]+" to ", k)                        //服务器端将消息转发给集合中的每一个客户端
+					n, err := v.Write([]byte("[" + msg_str[1] + "]: " + msg_str[2])) //给除了自己的每一个客户端发送自己之前要发送的消息
+					if err != nil {
+						fmt.Println("Write err code:", err, n)
 					}
 				}
 			}
-		case "quit":  //退出
-			for k, v := range ConnMap {  //遍历集合中的客户端昵称
-				if k != msg_str[1] {  //如果昵称不是自己
-					n,err:=v.Write([]byte("[" + msg_str[1] + "]: quit"))  //给除了自己的其他客户端昵称发送退出的消息，并使Write方法阻塞
-					if err!=nil {
-						fmt.Println("Write err code:",n)
+		case "quit": //退出
+			fmt.Println(msg_str[1], "quit")
+			for k, v := range ConnMap { //遍历集合中的客户端昵称
+				if k != msg_str[1] { //如果昵称不是自己
+					n, err := v.Write([]byte("[" + msg_str[1] + "]: quit")) //给除了自己的其他客户端昵称发送退出的消息，并使Write方法阻塞
+					if err != nil {
+						fmt.Println("Write err code:", err, n)
 					}
 				}
 			}
-			delete(ConnMap, msg_str[1])  //退出聊天室
+			delete(ConnMap, msg_str[1]) //退出聊天室
 		}
 	}
 }
