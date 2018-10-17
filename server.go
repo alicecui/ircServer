@@ -48,7 +48,10 @@ func handle(conn net.Conn) {
 			fmt.Println(conn.RemoteAddr(), "-->", msg_str[1])  //nick占在数组下标0上，客户端上写的昵称占在数组下标1上
 			for k, v := range ConnMap {  //遍历集合中存储的客户端消息
 				if k != msg_str[1] {
-					v.Write([]byte("[" + msg_str[1] + "]: join..."))
+					n,err:=v.Write([]byte("[" + msg_str[1] + "]: join..."))
+					if err!=nil {
+						fmt.Println("Write err code:",n)
+					}
 				}
 			}
 			ConnMap[msg_str[1]] = conn
@@ -56,13 +59,19 @@ func handle(conn net.Conn) {
 			for k, v := range ConnMap {  //k指客户端昵称   v指客户端连接服务器端后的地址
 				if k != msg_str[1] {  //判断是不是给自己发，如果不是
 					fmt.Println("Send "+msg_str[2]+" to ", k)  //服务器端将消息转发给集合中的每一个客户端
-					v.Write([]byte("[" + msg_str[1] + "]: " + msg_str[2]))  //给除了自己的每一个客户端发送自己之前要发送的消息
+					n,err:=v.Write([]byte("[" + msg_str[1] + "]: " + msg_str[2]))  //给除了自己的每一个客户端发送自己之前要发送的消息
+					if err!=nil {
+						fmt.Println("Write err code:",n)
+					}
 				}
 			}
 		case "quit":  //退出
 			for k, v := range ConnMap {  //遍历集合中的客户端昵称
 				if k != msg_str[1] {  //如果昵称不是自己
-					v.Write([]byte("[" + msg_str[1] + "]: quit"))  //给除了自己的其他客户端昵称发送退出的消息，并使Write方法阻塞
+					n,err:=v.Write([]byte("[" + msg_str[1] + "]: quit"))  //给除了自己的其他客户端昵称发送退出的消息，并使Write方法阻塞
+					if err!=nil {
+						fmt.Println("Write err code:",n)
+					}
 				}
 			}
 			delete(ConnMap, msg_str[1])  //退出聊天室
