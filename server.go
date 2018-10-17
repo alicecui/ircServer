@@ -37,7 +37,8 @@ func handle(conn net.Conn) {
 		data := make([]byte, 255)        //创建字节流 （此处同 一对一 通信）
 		msg_read, err := conn.Read(data) //声明并将从客户端读取的消息赋给msg_read 和err
 		if msg_read == 0 || err != nil {
-			continue
+		    fmt.Println(conn.RemoteAddr,"--> read err",err)
+	            break
 		}
 
 		//解析协议
